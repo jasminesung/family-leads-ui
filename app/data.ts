@@ -1,3 +1,5 @@
+export type Channel = "sms" | "call" | "email";
+
 export enum Intent {
   SIGN_UP = "SIGN_UP",
   LEARN_MORE = "LEARN_MORE",
@@ -18,7 +20,7 @@ export type Event = {
   id: number;
   lead_id: number;
   time: number;
-  action: "call" | "sms" | "email";
+  action: Channel;
   summary: string;
   context_id: number;
 };
@@ -27,7 +29,7 @@ export type Interaction = {
   id: number;
   lead_id: number;
   time: number;
-  channel: "sms" | "call" | "email";
+  channel: Channel;
   direction: "inbound" | "outbound";
   summary: string;
   intent: Intent;
@@ -237,85 +239,292 @@ export const INTERACTIONS: Interaction[] = [
   },
 ];
 
-export const CONTEXT: { id: number; lead_id: number; data: string }[] = [
+export type FamilyMember = {
+  name: string;
+  age: number;
+  grade: string;
+  soccer_experience: string | null;
+  position?: string;
+  notes: string;
+};
+
+export type PastInteractionSummary = {
+  date: string;
+  channel: Channel;
+  direction: "inbound" | "outbound";
+  summary: string;
+};
+
+export type LeadContext = {
+  id: number;
+  lead_id: number;
+  lead_info: {
+    name: string;
+    phone: string;
+    preferred_language: string;
+    best_contact_window: string;
+    preferred_channel: Channel;
+    channel_response_rates: Record<string, string>;
+  };
+  status: string;
+  family_info: FamilyMember[];
+  last_derived_data: {
+    derived_at: string;
+    intent_score: number;
+    key_signals: string[];
+    objections: string[];
+    sentiment: "positive" | "neutral" | "negative";
+    suggested_message: string;
+    tone_guidelines: string;
+  };
+  past_interactions: PastInteractionSummary[];
+  current_action: {
+    action: Channel;
+    scheduled_at: string;
+    applied_rules: string[];
+  };
+};
+
+export const CONTEXT: LeadContext[] = [
   {
     id: 1,
     lead_id: 1,
-    data: `AGENT CONTEXT — PRE-INTERACTION BRIEF
-
-Parent: John Doe | Phone: (512) 555-0847 | Preferred Language: English | Best Contact Window: Weekdays 3–6 PM CT | Preferred Channel: SMS (answered 4/5 texts, 1/3 calls)
-
-Family Profile:
-• Son: Lucas, age 9, entering 4th grade. Played rec league soccer (fall 2025). Midfielder.
-• Daughter: Sofia, age 7, entering 2nd grade. No soccer experience. "Interested but shy."
-
-Key Signals: High intent for Lucas. Moderate intent for Sofia. Price-sensitive — responded positively to discounts. Decision involves husband and Lucas's current coach.
-Objections: Cost, Sofia's confidence, spousal buy-in.
-
-Suggested Message: "Hi John! Just a quick heads-up — early-bird pricing ends this Tuesday, Apr 15. With the sibling discount, Lucas and Sofia would be $340 total (saves you $110). Sofia would be in our Lil' Kickers group — small teams, super encouraging coaches. Want me to hold two spots? No commitment yet. 😊"
-
-Tone: Warm, low-pressure, family-oriented.`,
+    lead_info: {
+      name: "John Doe",
+      phone: "(512) 555-0847",
+      preferred_language: "English",
+      best_contact_window: "Weekdays 3–6 PM CT",
+      preferred_channel: "sms",
+      channel_response_rates: { sms: "4/5", call: "1/3" },
+    },
+    status: "hot",
+    family_info: [
+      {
+        name: "Lucas",
+        age: 9,
+        grade: "Entering 4th",
+        soccer_experience: "Rec league (Fall 2025)",
+        position: "Midfielder",
+        notes: "High intent — parent initiated contact for him",
+      },
+      {
+        name: "Sofia",
+        age: 7,
+        grade: "Entering 2nd",
+        soccer_experience: null,
+        notes:
+          'Interested but shy. Position beginner-friendly angle (Lil\' Kickers).',
+      },
+    ],
+    last_derived_data: {
+      derived_at: "2025-04-03T18:30:00Z",
+      intent_score: 0.78,
+      key_signals: [
+        "High intent for Lucas (prior soccer, parent initiated contact)",
+        "Moderate intent for Sofia (interest but hesitation around shyness)",
+        "Price-sensitive — responded positively to sibling discount",
+        "Decision involves husband and Lucas's current coach",
+      ],
+      objections: [
+        "Cost concern",
+        "Sofia's confidence level",
+        "Needs spousal buy-in",
+      ],
+      sentiment: "positive",
+      suggested_message:
+        'Hi John! Just a quick heads-up — early-bird pricing ends this Tuesday, Apr 15. With the sibling discount, Lucas and Sofia would be $340 total (saves you $110). Sofia would be in our Lil\' Kickers group — small teams, super encouraging coaches. Want me to hold two spots? No commitment yet. 😊',
+      tone_guidelines:
+        "Warm, low-pressure, family-oriented. Mirror casual texting style. Use kids' first names.",
+    },
+    past_interactions: [
+      { date: "2025-03-12", channel: "sms", direction: "inbound", summary: "Replied to camp flyer. Asked about age groups and pricing." },
+      { date: "2025-03-14", channel: "sms", direction: "outbound", summary: 'Sent session details + early-bird discount. Responded: "Need to check with my husband."' },
+      { date: "2025-03-28", channel: "call", direction: "outbound", summary: "No answer. Voicemail left re: early-bird deadline Apr 15." },
+      { date: "2025-04-03", channel: "sms", direction: "outbound", summary: 'Asked about sibling discount. Confirmed 15%. Replied: "Let me talk to Lucas\'s coach."' },
+    ],
+    current_action: {
+      action: "sms",
+      scheduled_at: "2025-04-14T15:00:00Z",
+      applied_rules: ["LearnMoreRule", "SiblingDiscountRule", "DeadlineUrgencyRule"],
+    },
   },
   {
     id: 2,
     lead_id: 2,
-    data: `AGENT CONTEXT — PRE-INTERACTION BRIEF
-
-Parent: Sarah Kim | Phone: (512) 555-1923 | Preferred Language: English | Best Contact Window: Weekday mornings | Preferred Channel: Call
-
-Family Profile:
-• Daughter: Mia, age 6, entering 1st grade. No sports experience. Sarah wants her to "try something active."
-
-Key Signals: Interested but cautious. Wants a trial before committing. Budget is not a concern.
-Objections: Child's readiness, wants to see the environment first.
-
-Suggested Approach: Offer a free Saturday trial session. Emphasize small group sizes and nurturing coaches.
-
-Tone: Reassuring, patient, educational.`,
+    lead_info: {
+      name: "Sarah Kim",
+      phone: "(512) 555-1923",
+      preferred_language: "English",
+      best_contact_window: "Weekday mornings",
+      preferred_channel: "call",
+      channel_response_rates: { sms: "1/1", call: "0/0" },
+    },
+    status: "engaged",
+    family_info: [
+      {
+        name: "Mia",
+        age: 6,
+        grade: "Entering 1st",
+        soccer_experience: null,
+        notes:
+          'No sports experience. Mom wants her to "try something active." Cautious parent.',
+      },
+    ],
+    last_derived_data: {
+      derived_at: "2025-03-30T14:00:00Z",
+      intent_score: 0.55,
+      key_signals: [
+        "Interested but cautious — wants trial before committing",
+        "Budget is not a concern",
+        "Wants to see the environment first",
+      ],
+      objections: [
+        "Child's readiness for team sports",
+        "Wants to visit/trial before paying",
+      ],
+      sentiment: "neutral",
+      suggested_message:
+        "Hi Sarah! We'd love for Mia to try a free session this Saturday at 10 AM. It's a small group of 6 kids with Coach Daniela — super gentle and encouraging. No commitment, just come see if Mia has fun! Want me to save her a spot?",
+      tone_guidelines: "Reassuring, patient, educational. Emphasize safety and nurturing environment.",
+    },
+    past_interactions: [
+      { date: "2025-03-29", channel: "sms", direction: "inbound", summary: "Asked if there are beginner-only groups. Daughter Mia (6) has never played." },
+      { date: "2025-03-30", channel: "sms", direction: "outbound", summary: 'Explained Lil\' Kickers program. Replied: "Can she try one session first?"' },
+    ],
+    current_action: {
+      action: "call",
+      scheduled_at: "2025-04-15T10:00:00Z",
+      applied_rules: ["TrialOfferRule", "BeginnerNurtureRule"],
+    },
   },
   {
     id: 3,
     lead_id: 3,
-    data: `AGENT CONTEXT — PRE-INTERACTION BRIEF
-
-Parent: Marcus Johnson | Phone: (512) 555-3341 | Preferred Language: English | Best Contact Window: Evenings after 7 PM CT | Preferred Channel: SMS
-
-Family Profile:
-• Son: Jayden, age 11, entering 6th grade. Plays travel soccer (striker). Looking for summer skill development.
-
-Key Signals: High intent. Wants competitive/advanced program specifically. Asked about coach credentials.
-Objections: None yet — early stage.
-
-Suggested Approach: Share advanced track details and Coach Rivera's bio. Mention small 8:1 player-coach ratio.
-
-Tone: Direct, knowledgeable, sports-focused.`,
+    lead_info: {
+      name: "Marcus Johnson",
+      phone: "(512) 555-3341",
+      preferred_language: "English",
+      best_contact_window: "Evenings after 7 PM CT",
+      preferred_channel: "sms",
+      channel_response_rates: { call: "1/1" },
+    },
+    status: "new",
+    family_info: [
+      {
+        name: "Jayden",
+        age: 11,
+        grade: "Entering 6th",
+        soccer_experience: "Travel soccer",
+        position: "Striker",
+        notes: "Looking for advanced summer skill development. Competitive player.",
+      },
+    ],
+    last_derived_data: {
+      derived_at: "2025-04-08T20:00:00Z",
+      intent_score: 0.65,
+      key_signals: [
+        "High intent — called in proactively",
+        "Wants competitive/advanced track specifically",
+        "Asked about coach credentials and training methodology",
+      ],
+      objections: [],
+      sentiment: "positive",
+      suggested_message:
+        "Hey Marcus! Great chatting earlier. Here's the Advanced Track info for Jayden: 3-week intensive, 8:1 player-coach ratio, led by Coach Rivera (ex-MLS, USSF A-license). Schedule + registration link: [link]. Happy to answer any Qs!",
+      tone_guidelines: "Direct, knowledgeable, sports-focused. Speak to the competitive parent.",
+    },
+    past_interactions: [
+      { date: "2025-04-08", channel: "call", direction: "inbound", summary: "Called asking about advanced/competitive track. Son Jayden (11) plays travel soccer." },
+    ],
+    current_action: {
+      action: "sms",
+      scheduled_at: "2025-04-16T19:30:00Z",
+      applied_rules: ["LearnMoreRule", "AdvancedTrackRule"],
+    },
   },
   {
     id: 4,
     lead_id: 4,
-    data: `AGENT CONTEXT — POST-CONVERSION
-
-Parent: Lisa Patel | Phone: (512) 555-7782 | Status: CONVERTED
-
-All 3 children enrolled. Payment confirmed Mar 25. Family package applied.
-Next: Send welcome packet and session schedule by Apr 1.`,
+    lead_info: {
+      name: "Lisa Patel",
+      phone: "(512) 555-7782",
+      preferred_language: "English",
+      best_contact_window: "Weekday afternoons",
+      preferred_channel: "sms",
+      channel_response_rates: { sms: "1/1", call: "1/1" },
+    },
+    status: "converted",
+    family_info: [
+      { name: "Anika", age: 6, grade: "Entering 1st", soccer_experience: null, notes: "Beginner group." },
+      { name: "Rohan", age: 8, grade: "Entering 3rd", soccer_experience: "Rec league (1 season)", notes: "Intermediate group." },
+      { name: "Dev", age: 10, grade: "Entering 5th", soccer_experience: "Rec league (3 seasons)", position: "Defender", notes: "Intermediate-advanced group." },
+    ],
+    last_derived_data: {
+      derived_at: "2025-03-25T17:00:00Z",
+      intent_score: 1.0,
+      key_signals: [
+        "Converted — all 3 children enrolled",
+        "Payment confirmed Mar 25",
+        "Family package discount applied",
+      ],
+      objections: [],
+      sentiment: "positive",
+      suggested_message: "N/A — converted. Send welcome packet and session schedule.",
+      tone_guidelines: "Celebratory, informational. Confirm logistics.",
+    },
+    past_interactions: [
+      { date: "2025-03-19", channel: "sms", direction: "inbound", summary: "Inquired about multi-child pricing for 3 kids (ages 6, 8, 10)." },
+      { date: "2025-03-25", channel: "call", direction: "outbound", summary: "Discussed family package. Signed up all three on the call. Payment confirmed." },
+    ],
+    current_action: {
+      action: "email",
+      scheduled_at: "2025-04-01T09:00:00Z",
+      applied_rules: ["PostConversionOnboardingRule"],
+    },
   },
   {
     id: 5,
     lead_id: 5,
-    data: `AGENT CONTEXT — WIN-BACK BRIEF
-
-Parent: David Chen | Phone: (512) 555-6019 | Preferred Language: English / Mandarin | Best Contact Window: Weekends | Preferred Channel: Email
-
-Family Profile:
-• Twins: Ethan & Emma, age 8. Attended camp last summer. Feedback: "drills were repetitive, kids got bored."
-
-Key Signals: Low intent. Considering swim camp. Did not respond to last voicemail.
-Objections: Poor past experience, kids' disinterest.
-
-Suggested Approach: Email with new program highlights — new coaches, gamified drills, buddy system. Offer 20% returning-family discount.
-
-Tone: Apologetic, highlight improvements, no pressure.`,
+    lead_info: {
+      name: "David Chen",
+      phone: "(512) 555-6019",
+      preferred_language: "English / Mandarin",
+      best_contact_window: "Weekends",
+      preferred_channel: "email",
+      channel_response_rates: { sms: "1/1", call: "0/1", email: "0/0" },
+    },
+    status: "lost",
+    family_info: [
+      { name: "Ethan", age: 8, grade: "Entering 3rd", soccer_experience: "Summer camp 2024", notes: 'Feedback: "drills were repetitive, got bored."' },
+      { name: "Emma", age: 8, grade: "Entering 3rd", soccer_experience: "Summer camp 2024", notes: 'Same feedback as twin. Considering swim camp instead.' },
+    ],
+    last_derived_data: {
+      derived_at: "2025-03-27T16:00:00Z",
+      intent_score: 0.15,
+      key_signals: [
+        "Low intent — considering swim camp as alternative",
+        "Poor past experience cited (repetitive drills)",
+        "Did not respond to last voicemail",
+      ],
+      objections: [
+        "Kids didn't enjoy camp last year",
+        "Repetitive drills",
+        "Exploring competing activities (swim camp)",
+      ],
+      sentiment: "negative",
+      suggested_message:
+        'Hi David! We heard you — and we made big changes for 2025. New coaching staff, gamified drills, and a buddy system so Ethan & Emma stay together. Returning families get 20% off. Would love to win them back. Here\'s what\'s new: [link]',
+      tone_guidelines: "Apologetic, highlight improvements, no pressure. Acknowledge past issues directly.",
+    },
+    past_interactions: [
+      { date: "2025-03-20", channel: "sms", direction: "outbound", summary: 'Sent returning families discount. Replied: "Kids didn\'t love it last year. Thinking swim camp."' },
+      { date: "2025-03-27", channel: "call", direction: "outbound", summary: "No answer. Left voicemail about new coaches and updated drills." },
+    ],
+    current_action: {
+      action: "email",
+      scheduled_at: "2025-04-17T10:00:00Z",
+      applied_rules: ["WinBackRule", "ReturningFamilyDiscountRule", "PastNegativeFeedbackRule"],
+    },
   },
 ];
 
@@ -334,7 +543,7 @@ export function getInteractionsByLeadId(leadId: number): Interaction[] {
   );
 }
 
-export function getContextByLeadId(leadId: number) {
+export function getContextByLeadId(leadId: number): LeadContext | undefined {
   return CONTEXT.find((c) => c.lead_id === leadId);
 }
 
