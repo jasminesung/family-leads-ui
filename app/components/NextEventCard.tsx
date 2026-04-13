@@ -1,15 +1,13 @@
 import type { Event } from "../data";
-import { formatTimestamp } from "../data";
+import { formatDateTime } from "../data";
 import { CHANNEL_ICONS } from "./constants";
 import { SectionHeader } from "./ui";
 
 export function NextEventCard({
   event,
-  leadName,
   onTrigger,
 }: {
   event: Event | null;
-  leadName: string;
   onTrigger: () => void;
 }) {
   if (!event) {
@@ -33,12 +31,24 @@ export function NextEventCard({
               {event.action}
             </span>
             <span className="text-sm text-zinc-400">
-              · {formatTimestamp(event.time)}
+              · {formatDateTime(event.scheduled_time)}
             </span>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-            {event.summary}
+            {event.goal}
           </p>
+          {event.applied_rules.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {event.applied_rules.map((rule) => (
+                <span
+                  key={rule}
+                  className="rounded bg-indigo-50 px-2 py-0.5 font-mono text-xs text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                >
+                  {rule}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <button
           onClick={onTrigger}

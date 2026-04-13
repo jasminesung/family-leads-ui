@@ -1,5 +1,8 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import type { Interaction } from "../data";
-import { formatTimestamp } from "../data";
+import { formatDateTime } from "../data";
 import { CHANNEL_ICONS } from "./constants";
 import { SectionHeader } from "./ui";
 
@@ -8,6 +11,8 @@ export function InteractionHistory({
 }: {
   interactions: Interaction[];
 }) {
+  const router = useRouter();
+
   return (
     <section className="rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
@@ -21,17 +26,17 @@ export function InteractionHistory({
               <th className="px-6 py-2.5 text-xs font-medium text-zinc-500">Channel</th>
               <th className="px-6 py-2.5 text-xs font-medium text-zinc-500">Direction</th>
               <th className="px-6 py-2.5 text-xs font-medium text-zinc-500">Summary</th>
-              <th className="px-6 py-2.5 text-xs font-medium text-zinc-500">Intent</th>
             </tr>
           </thead>
           <tbody>
             {interactions.map((ix) => (
               <tr
                 key={ix.id}
-                className="border-b border-zinc-50 dark:border-zinc-800/50"
+                onClick={() => router.push(`/interactions/${ix.id}`)}
+                className="cursor-pointer border-b border-zinc-50 transition-colors hover:bg-zinc-50 dark:border-zinc-800/50 dark:hover:bg-zinc-800/50"
               >
                 <td className="whitespace-nowrap px-6 py-3 text-zinc-500">
-                  {formatTimestamp(ix.time)}
+                  {formatDateTime(ix.date_time)}
                 </td>
                 <td className="px-6 py-3">
                   <span className="inline-flex items-center gap-1 text-zinc-700 dark:text-zinc-300">
@@ -40,18 +45,13 @@ export function InteractionHistory({
                 </td>
                 <td className="px-6 py-3">
                   <span
-                    className={`text-xs font-medium ${ix.direction === "inbound" ? "text-green-600" : "text-zinc-400"}`}
+                    className={`text-xs font-medium ${ix.direction === "in" ? "text-green-600" : "text-zinc-400"}`}
                   >
-                    {ix.direction === "inbound" ? "⬅ In" : "➡ Out"}
+                    {ix.direction === "in" ? "⬅ In" : "➡ Out"}
                   </span>
                 </td>
                 <td className="max-w-md px-6 py-3 text-zinc-700 dark:text-zinc-300">
-                  {ix.summary}
-                </td>
-                <td className="px-6 py-3">
-                  <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs font-mono text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                    {ix.intent}
-                  </span>
+                  {ix.data}
                 </td>
               </tr>
             ))}
