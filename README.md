@@ -2,7 +2,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, run the development server. [Backend](https://github.com/jasminesung/family-leads-api) needs to be running for this UI to load.
 
 ```bash
 npm run dev
