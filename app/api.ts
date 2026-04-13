@@ -9,7 +9,7 @@ import type {
   RawContext,
   RawConversation,
 } from "./data";
-import { extractRefId, extractTimestamp, parseBulletString } from "./data";
+import { extractRefId, extractRefPath, extractTimestamp, parseBulletString } from "./data";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -46,14 +46,22 @@ function normalizeEvent(raw: RawEvent): Event {
 }
 
 function normalizeInteraction(raw: RawInteraction): Interaction {
+  const dateTime = raw.date_time
+    ?? raw.datetime_start
+    ?? raw.createdAt
+    ?? 0;
+  const normalizedDateTime = typeof dateTime === "string"
+    ? Math.floor(new Date(dateTime).getTime() / 1000)
+    : extractTimestamp(dateTime);
+
   return {
     id: raw.id,
     channel: raw.channel as Interaction["channel"],
     data: raw.data,
-    date_time: extractTimestamp(raw.date_time),
+    date_time: normalizedDateTime,
     direction: raw.direction,
-    event_id: extractRefId(raw.event),
-    lead_id: extractRefId(raw.lead) ?? "",
+    event_id: extractRefPath(raw.event),
+    lead_id: extractRefPath(raw.lead) ?? "",
   };
 }
 
@@ -128,9 +136,9 @@ export async function fetchInteractions(): Promise<Interaction[]> {
 export async function fetchInteractionsByLeadId(
   leadId: string
 ): Promise<Interaction[]> {
-  const interactions = await fetchInteractions();
-  return interactions
-    .filter((i) => i.lead_id === leadId)
+  const raw = await fetchJson<RawInteraction[]>(`/interactions?leadId=${leadId}`);
+  return raw
+    .map(normalizeInteraction)
     .sort((a, b) => b.date_time - a.date_time);
 }
 

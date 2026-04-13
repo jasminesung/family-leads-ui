@@ -15,6 +15,7 @@ import { CHANNEL_ICONS } from "../../components/constants";
 import { NextEventCard } from "../../components/NextEventCard";
 import { AgentContextCard } from "../../components/AgentContext";
 import { InteractionHistory } from "../../components/InteractionHistory";
+import { PastActionsCard } from "../../components/PastActionsCard";
 
 export default function LeadDetailPage() {
   const params = useParams();
@@ -22,6 +23,7 @@ export default function LeadDetailPage() {
 
   const [lead, setLead] = useState<Lead | null>(null);
   const [nextEvent, setNextEvent] = useState<Event | null>(null);
+  const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [context, setContext] = useState<LeadContext | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +45,11 @@ export default function LeadDetailPage() {
       ]);
 
       const sorted = events.sort((a, b) => b.scheduled_time - a.scheduled_time);
-      setNextEvent(sorted[0] ?? null);
+      const now = Math.floor(Date.now() / 1000);
+      const upcoming = sorted.filter((e) => e.scheduled_time > now);
+      const past = sorted.filter((e) => e.scheduled_time <= now);
+      setNextEvent(upcoming[0] ?? null);
+      setPastEvents(past);
       setInteractions(ixs);
       setContext(ctx ?? null);
       setLoading(false);
@@ -151,6 +157,7 @@ export default function LeadDetailPage() {
 
         <NextEventCard event={nextEvent} onTrigger={handleTriggerEvent} />
         {context && <AgentContextCard context={context} />}
+        <PastActionsCard events={pastEvents} />
         <InteractionHistory interactions={interactions} />
       </main>
     </div>

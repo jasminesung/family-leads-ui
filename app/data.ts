@@ -31,10 +31,14 @@ export type RawInteraction = {
   id: string;
   channel: string;
   data: string;
-  date_time: FirestoreTimestamp | number;
+  date_time?: FirestoreTimestamp | number;
+  datetime_start?: string | number;
+  datetime_end?: string | number;
+  createdAt?: string | number;
+  updatedAt?: string | number;
   direction: "in" | "out";
-  event?: FirestoreRef;
-  lead: FirestoreRef;
+  event?: FirestoreRef | string;
+  lead?: FirestoreRef | string;
 };
 
 export type RawContext = {
@@ -132,6 +136,17 @@ export type RawConversation = {
 };
 
 // ---- Parsing helpers ----
+
+export function extractRefPath(ref: FirestoreRef | string | undefined | null): string | null {
+  if (!ref) return null;
+  if (typeof ref === "string") {
+    const parts = ref.split("/");
+    return parts[parts.length - 1] ?? null;
+  }
+  if (!ref._path?.segments) return null;
+  const segments = ref._path.segments;
+  return segments[segments.length - 1] ?? null;
+}
 
 export function extractRefId(ref: FirestoreRef | undefined | null): string | null {
   if (!ref?._path?.segments) return null;
