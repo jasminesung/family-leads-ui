@@ -133,13 +133,26 @@ export async function fetchInteractions(): Promise<Interaction[]> {
   return raw.map(normalizeInteraction);
 }
 
+// export async function fetchInteractionsByLeadId(
+//   leadId: string
+// ): Promise<Interaction[]> {
+//   const raw = await fetchJson<RawInteraction[]>(`/interactions?leadId=${leadId}`);
+//   return raw
+//     .map(normalizeInteraction)
+//     .sort((a, b) => b.date_time - a.date_time);
+// }
+
 export async function fetchInteractionsByLeadId(
   leadId: string
 ): Promise<Interaction[]> {
-  const raw = await fetchJson<RawInteraction[]>(`/interactions?leadId=${leadId}`);
-  return raw
-    .map(normalizeInteraction)
-    .sort((a, b) => b.date_time - a.date_time);
+  const interactions = await fetchInteractions();
+  return interactions;
+  // console.log('interactions', interactions)
+  // let res = interactions
+  //   .filter((i) => i.lead_id === leadId)
+  //   .sort((a, b) => b.date_time - a.date_time);
+  //   console.log('res', res)
+  //   return res
 }
 
 // ---- Context ----
